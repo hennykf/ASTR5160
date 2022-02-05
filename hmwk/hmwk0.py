@@ -45,8 +45,7 @@ def linfunc_plot(m, b):
     plt.savefig('/d/www/kianah/public_html/hmwk0_line_fitting.png')
     print("You will find the plot at: http://faraday.uwyo.edu/~kianah/hmwk0_line_fitting.png")
 
-
+# KFH Sets up ability to run program from command line
 m = float(input("Please enter a value for slope m: "))
 b = float(input("Please enter a value for y intercept b: "))
 linfunc_plot(m, b)
-# Note: I'm not sure if you meant that we should have it accept values at the command line, but I've interpretted it as meaning that if you load this python file, you can run the function linfunc_plot() and have everything happen.

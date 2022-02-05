@@ -42,6 +42,7 @@ def galactic_coords_zenith():
 
     full_data = np.asarray(full_data)
     print(full_data)
+    plt.clf()
     plt.scatter(full_data[:,0], full_data[:,1], s=1, color = "blue")
     plt.xlabel("Galactic coord l (degrees)")
     plt.ylabel("Galactic coord b (degrees)")
@@ -52,5 +53,3 @@ def galactic_coords_zenith():
 galactic_coords_zenith()
 radec_to_cartesian('00h45m30s', '+24d15m05s')                                                               
 galactic_to_radec(0, 0)
-
-# can't figure out where those green dots are coming from :(
