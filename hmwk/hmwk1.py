@@ -38,7 +38,11 @@ def best_airmass(month):
     
     times = []
     for i in days:
-        time = '2022-' + str('%02d' % month) + '-' + str('%02d' % i) + 'T23:00:00.000'
+        if i == 1:
+            next_month = month + 1
+            time = '2022-' + str('%02d' % next_month) + '-' + str('%02d' % i) + 'T06:00:00.000'
+        else:
+            time = '2022-' + str('%02d' % month) + '-' + str('%02d' % i) + 'T06:00:00.000'
         times.append(Time(time))
 
     # KFH Find alt and az of quasars at 11 PM MST on each day of the month
