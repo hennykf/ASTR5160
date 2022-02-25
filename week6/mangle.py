@@ -9,7 +9,7 @@ cap1 = np.asarray(cap(76*u.deg, 36*u.deg, 5))
 cap2 = np.asarray(cap(75*u.deg, 35*u.deg, 5))
 coord_list = np.asarray([[cap1, cap2]])
 
-def create_mangle_file(array_of_polys, filename, weight=1, area=0):
+def create_mangle_file(array_of_polys, filename, weight=[1], area=[0]):
     """
     Function that takes an array consisting of 4-vector caps, and
     saves a .ply file in the correct format for pymangle to use.
@@ -38,7 +38,7 @@ def create_mangle_file(array_of_polys, filename, weight=1, area=0):
     for i in np.arange(len(array_of_polys)):
         poly = i+1
         f.write('\n')
-        f.write(str('polygon {} ({} caps, {} weight, 0 pixel, {} str):'.format(poly, len(array_of_polys[:][0]), str(weight[i]), str(area[i]))))
+        f.write(str('polygon {} ({} caps, {} weight, 0 pixel, {} str):'.format(poly, len(array_of_polys[:][0]), weight[i], area[i])))
 
         # KFH For each polygon make a line in ply file for each cap
         for cap in array_of_polys[:][i]:
