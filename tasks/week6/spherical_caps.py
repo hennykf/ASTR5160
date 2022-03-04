@@ -12,7 +12,7 @@ def ra_vect_array(ra, neg=False):
     """
     # KFH Find the center of the bounded area
     new_ra = str(int(ra[0:2])+6) + ra[2:]
-    h = np.where(neg, 1, -1)
+    h = np.where(neg, -1, 1)
     # KFH Calculate the cartesian coordinates of spherical cap
     area = SkyCoord(ra=new_ra, dec = '+00d00m00s', frame='icrs').cartesian
     vec4array=[area.x.value, area.y.value, area.z.value, h]
