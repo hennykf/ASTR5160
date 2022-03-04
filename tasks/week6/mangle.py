@@ -1,5 +1,5 @@
 import pymangle
-from  spherical_caps import cap
+from week6.spherical_caps import cap
 from astropy import units as u
 import numpy as np
 import os
