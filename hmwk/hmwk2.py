@@ -63,8 +63,9 @@ def plot_rect(rect1, rect2, rect3, rect4, saveloc):
     ax.legend(title="Area (arcsec^2)")
 
     fig.savefig(saveloc)
-    print("Saved figure to: " + saveloc)
+    print("Saved 4 rectangle figure to: " + saveloc)
 
+    
 def populate_rect(ra_min, ra_max, dec_min, dec_max, points=10000):
     """
     A function to find the subset of a spherically distributed set of random points
@@ -83,7 +84,7 @@ def populate_rect(ra_min, ra_max, dec_min, dec_max, points=10000):
     """
 
     # KFH First populate the entire sphere with random even points
-    ra = 360.*(random(points))
+    ra = 360.*(random(points)) - 180
     dec = (180/np.pi)*np.arcsin(1.-random(points)*2.)
     coords = pd.DataFrame({'ra': ra, 'dec' : dec})
 
@@ -95,22 +96,47 @@ def populate_rect(ra_min, ra_max, dec_min, dec_max, points=10000):
 
     return(points_in_box)
 
+
+def compare_area(rect, pts):
+    """
+    Compare the fraction of points in a box with the fraction of arcseconds
+    in area of a sphere.
+    
+    Inputs
+    ------
+    rect: list
+    - a list of [ra_min, ra_max, dec_min, dec_max]
+
+    Returns
+    -------
+    fraction_points : float
+    - fraction of the randomly generated points inside given rect
+    fraction_area : float
+    - fraction of area of sphere inside given rect
+    """
+
+    # KFH Confirm that the rectangle contains the correct area relative to sphere                                                               
+    points_in_box = populate_rect(rect[0], rect[1], rect[2], rect[3], points=pts)
+    fraction_points = points_in_box.shape[0] / pts
+
+    area_of_box = rect_area(rect[0], rect[1], rect[2], rect[3])
+    fraction_area = area_of_box / rect_area(0, 360, -90, 90)
+
+    return(fraction_points, fraction_area)
+
+
 if __name__ == '__main__':
     # KFH Show that the hemisphere has the correct number of points
-    print(rect_area(0,360,0,90))
+    print('Checking area of hemisphere:' + str(rect_area(0,360,0,90)))
 
     # Plot four boxes on an aitoff plot
     plot_rect([0, 20, 0, 15],
               [0, 20, 20, 35],
               [0, 20, 40, 55],
-              [0, 20, -20, -5],
-              saveloc='/d/www/kianah/public_html/hmwk/rectangle2.png')
+              [0, 20, 60, 75],
+              saveloc='/d/www/kianah/public_html/hmwk/four_rectangles.png')
 
     # KFH Confirm that the rectangle contains the correct area relative to sphere
-    points_in_box = populate_rect(0,15,0,20, points=100000)
-    fraction_points = points_in_box.shape[0] / 100000
-
-    area_of_box = rect_area(0,15,0,20)
-    fraction_area = area_of_box / rect_area(0, 360, -90, 90)
-
-    print(fraction_points, fraction_area)
+    fraction_points, fraction_area  = compare_area([0,15,0,20], 100000)
+    print("Fraction of points: " + str(fraction_points))
+    print("Fraction of sphere: " + str(fraction_area))
