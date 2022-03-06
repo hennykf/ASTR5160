@@ -126,6 +126,12 @@ def compare_area(rect, pts):
 
 
 if __name__ == '__main__':
+    from argparse import ArgumentParser
+
+    ap = ArgumentParser(description="Plot rectangles on a sphere")
+    ap.add_argument('plot_loc', help='The full filepath for output plot')
+    args = ap.parse_args()
+    
     # KFH Show that the hemisphere has the correct number of points
     print('Checking area of hemisphere:' + str(rect_area(0,360,0,90)))
 
@@ -134,7 +140,7 @@ if __name__ == '__main__':
               [0, 20, 20, 35],
               [0, 20, 40, 55],
               [0, 20, 60, 75],
-              saveloc='/d/www/kianah/public_html/hmwk/four_rectangles.png')
+              saveloc=args.plot_loc)
 
     # KFH Confirm that the rectangle contains the correct area relative to sphere
     fraction_points, fraction_area  = compare_area([0,15,0,20], 100000)
