@@ -59,10 +59,13 @@ def sweep_subset(fits_file):
     first_100 = tab[0:101]
     
     # KFH Find the names of all the files where coordinates would be
-    filenames = ['sweep-{}p{}-{}p{}.fits'.format(int(q['RA'] - (q['RA']%10)),
-                                                 int(q['DEC'] - (q['DEC']%5)),
-                                                 int(q['RA'] + (10-q['RA']%10)),
-                                                 int(q['DEC'] + (5-q['DEC']%5))) for q in first_100]
+    # KFH and account for positive and negative declination
+    filenames = ['sweep-{}{}{}-{}{}{}.fits'.format(int(q['RA'] - (q['RA']%10)),
+                                                  'm' if (q['DEC'] - (q['DEC']%5)) < 0 else 'p',
+                                                   int(q['DEC'] - (q['DEC']%5)),
+                                                   int(q['RA'] + (10-q['RA']%10)),
+                                                   'm' if (q['DEC'] - (q['DEC']%5)) < 0 else 'p',
+                                                   int(q['DEC'] + (5-q['DEC']%5))) for q in first_100]
 
     # KFH Return the set of unique filenames where we can find these objects
     return(set(filenames))
