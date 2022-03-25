@@ -17,17 +17,11 @@ def read_fits_files(fits_files, sweep_folder, filter_list):
     # KFH Get index of closest object from sweep file
     objects = [[SkyCoord(i['RA'], i['DEC'], frame='icrs', unit='degree') for i in tb] for tb in tab]
     sweep_objs = [[SkyCoord(i["RA"], i["DEC"], frame='icrs', unit='degree') for i in db] for db in database]
-
     idx1, idx2, sep2d, dist3d = sweep_objs.search_around_sky(objects, seplimit=0.5*u.arcsec)
 
     flux = [sweep_objs[idx2][c] for c in filter_list]
 
     print(flux[0:10])
-    G = flux['FLUX_G'] / flux['MW_TRANSMISSION_G']
-    R =	flux['FLUX_R'] / flux['MW_TRANSMISSION_R']
-    Z =	flux['FLUX_Z'] / flux['MW_TRANSMISSION_Z']
-    W1 = flux['FLUX_W1'] / flux['MW_TRANSMISSION_W1']
-    W2 = flux['FLUX_W2'] / flux['MW_TRANSMISSION_W2']
 
     flux2  = [(flux[f] / flux['MW_TRANSMISSION_' + f.split('_')[1]])for f in filter_list]
     mags = [(22.5 - 2.5*np.log10(f)) for f in flux2]
