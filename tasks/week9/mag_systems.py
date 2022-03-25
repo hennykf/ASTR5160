@@ -22,10 +22,13 @@ def one_pt_sdss_data(ra, dec, textfile):
     --------
     textfile saved in current directory containing results of query
     """
-    
-    ra_deg = Angles(ra).degree
-    dec_deg = Angles(dec).degree
-
+    if type(ra)==str:
+        ra_deg = Angles(ra).degree
+        dec_deg = Angles(dec).degree
+    else:
+        ra_deg = ra
+        dec_deg = dec
+        
     # KFH Make sure to get rid of existing file if present
     if (os.path.exists(textfile)):
         os.remove(textfile)
@@ -81,7 +84,7 @@ def ubvri_to_ugriz(list_of_filters, ra, dec, textfile):
     return([g,z,data['g'][0], data['z'][0]])
 
 
-def sweep_fluxes(ra, dec, list_of_cols):
+def sweep_fluxes(ra, dec, list_of_cols, type="mag"):
     """
     Find sweep file that contains the object at the ra, dec, and calculate
     magnitude in given filters.
@@ -101,16 +104,17 @@ def sweep_fluxes(ra, dec, list_of_cols):
     mag: list
     - A list of the magnitudes of the object at the filters given.
     """
+
     ra_deg = Angle(ra).degree
     dec_deg = Angle(dec).degree
-
+        
     # KFH Find filename where object is present
     filename = 'sweep-{}{}{}-{}{}{}.fits'.format(f"{int(ra_deg - (ra_deg%10)):03d}",
                                                  'm' if (dec_deg - (dec_deg%5)) < 0 else 'p',
                                                  f"{int(dec_deg - (dec_deg%5)):03d}",
                                                  f"{int(ra_deg + (10-ra_deg%10)):03d}",
                                                  'm' if (dec_deg - (dec_deg%5)) < 0 else 'p',
-                                                 f"{int(dec_deg + (5-dec_deg%5)):03d}")
+                                                  f"{int(dec_deg + (5-dec_deg%5)):03d}")
     path = '/d/scratch/ASTR5160/data/legacysurvey/dr9/south/sweep/9.0/' + str(filename)
     dat = Table.read(path)
 
@@ -119,8 +123,18 @@ def sweep_fluxes(ra, dec, list_of_cols):
     file_objs = SkyCoord(dat["RA"], dat["DEC"], frame='icrs', unit='degree')
     idx1, idx2, sep2d, dist3d = file_objs.search_around_sky(obj1, seplimit=1*u.arcsec)
 
-    # KFH Compute magnitudes of all filters given
-    mag = [(22.5 - 2.5*np.log10(dat[idx2][c]))[0] for c in list_of_cols]
+    if type == "mag":
+        # KFH Compute magnitudes of all filters given
+        mag = [(22.5 - 2.5*np.log10(dat[idx2][c]))[0] for c in list_of_cols]
+
+    elif type=="flux":
+        # KFH Return raw fluxes for listed columns
+        mag = [dat[idx2][c] for c in list_of_cols]
+
+    else:
+        print("Type must be 'mag' or 'flux'")
+
+        pass
     
     return(mag)
 
