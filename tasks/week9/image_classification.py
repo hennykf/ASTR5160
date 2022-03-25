@@ -26,7 +26,7 @@ def read_fits_files(fits_files, sweep_folder, filter_list):
     flux2  = [(flux[f] / flux['MW_TRANSMISSION_' + f.split('_')[1]])for f in filter_list]
     mags = [(22.5 - 2.5*np.log10(f)) for f in flux2]
 
-    print(mags[0:10]
+    print(mags[0:10])
               
 
 
