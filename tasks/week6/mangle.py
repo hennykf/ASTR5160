@@ -38,7 +38,6 @@ def create_mangle_file(array_of_polys, filename, weight=[1], area=[0]):
     for i in np.arange(len(array_of_polys)):
         poly = i+1
         f.write('\n')
-        print(i, poly, len(array_of_polys[:][i]))
         f.write(str('polygon {} ({} caps, {} weight, 0 pixel, {} str):'.format(poly, len(array_of_polys[:][i]), weight[i], area[i])))
 
         # KFH For each polygon make a line in ply file for each cap

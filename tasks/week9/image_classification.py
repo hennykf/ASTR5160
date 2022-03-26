@@ -5,6 +5,7 @@ from astropy.table import Table
 import astropy.units as u
 from astropy.coordinates import SkyCoord
 import pandas as pd
+import matplotlib.pyplot as plt
 
 def read_fits_files(fits_files, sweep_folder, filter_list):
 
@@ -57,8 +58,7 @@ def read_fits_files(fits_files, sweep_folder, filter_list):
         mag_all.append(mags)
         
     df = pd.DataFrame(mag_all, columns = filter_list)
-
-    return(df.shape)
+    return(df)
               
 
 
@@ -67,4 +67,8 @@ obj_files = ["/d/scratch/ASTR5160/week10/stars-ra180-dec30-rad3.fits",
 sweep_folder = '/d/scratch/ASTR5160/data/legacysurvey/dr9/south/sweep/9.0/'
 filter_list = ['FLUX_G', 'FLUX_R', 'FLUX_Z', 'FLUX_W1', 'FLUX_W2']
 mags = read_fits_files(obj_files, sweep_folder, filter_list)
+print(mags['FLUX_G'])
 
+plt.clf()
+plt.scatter(mags['FLUX_G'] - mags['FLUX_Z'], mags['FLUX_R'] - mags['FLUX_W1'])
+plt.savefig('/d/www/kianah/public_html/week9/stars_quasars.png')
