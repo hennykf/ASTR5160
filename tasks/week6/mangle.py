@@ -1,5 +1,5 @@
 import pymangle
-from  week6.spherical_caps import cap
+from tasks.week6.spherical_caps import cap
 from astropy import units as u
 import numpy as np
 import os
@@ -38,7 +38,7 @@ def create_mangle_file(array_of_polys, filename, weight=[1], area=[0]):
     for i in np.arange(len(array_of_polys)):
         poly = i+1
         f.write('\n')
-        f.write(str('polygon {} ({} caps, {} weight, 0 pixel, {} str):'.format(poly, len(array_of_polys[:][0]), weight[i], area[i])))
+        f.write(str('polygon {} ({} caps, {} weight, 0 pixel, {} str):'.format(poly, len(array_of_polys[:][i]), weight[i], area[i])))
 
         # KFH For each polygon make a line in ply file for each cap
         for cap in array_of_polys[:][i]:
