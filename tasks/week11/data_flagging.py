@@ -55,8 +55,17 @@ def sweep_obj(ra, dec, rad=.05, objtype=None):
     path = [('/d/scratch/ASTR5160/data/legacysurvey/dr9/south/sweep/9.0/' + f) for f in filename]
     
     # KFH If multiple sweeps files, combine data from all sweeps files
-    full_dat = np.concatenate([Table.read(i, format='fits') for i in path])
-    print(full_dat)
+    full_dat = []
+    for i in path:
+        dat = Table.read(i, format='fits')
+
+        # KFH Subset to only psf and mag <20 objs
+        if objtype:
+            dat = dat[dat['TYPE']== b'PSF']
+            dat = dat[(22.5-2.5*np.log10(dat['FLUX_R'])) < 20]
+        full_dat.append(dat)
+
+    full_dat = np.concatenate(full_dat)
 
     # KFH Get index of closest object from sweep file
     obj1 = SkyCoord(np.array([ra_deg]), np.array([dec_deg]), frame='icrs', unit='degree')
@@ -64,18 +73,18 @@ def sweep_obj(ra, dec, rad=.05, objtype=None):
     idx1, idx2, sep2d, dist3d = file_objs.search_around_sky(obj1, seplimit=rad*u.arcsec)
 
     obj = full_dat[idx2]
-    print(len(obj))
-    # KFH If a type filter is in place, subset to only those
-    if objtype:
-        obj2 = obj[obj['TYPE']==objtype]
-        print(len(obj2))
-        obj3 = obj2[(22.5-2.5*np.log10(obj2['FLUX_R'])) < 20]
+    return(obj)
 
-    else:
-        obj3 = obj
-    print(len(obj3))
-    return(obj3)
+def coord_match(datatable, fits_file):
 
+    tab = SkyCoord(datatable["RA"], datatable["DEC"], frame='icrs', unit='degree')
+
+    fits = Table.read(fits_file, format='fits')
+    fits2 = SkyCoord(fits['RA'], fits['DEC'], frame='icrs', unit='degree')
+
+    idx1, idx2, sep2d, dist3d = tab.search_around_sky(fits2, seplimit=.5*u.arcsec)
+
+    return(tab[idx2])
 
 if __name__=="__main__":
 
@@ -83,7 +92,7 @@ if __name__=="__main__":
     obj = sweep_obj(188.53667, 21.04572, rad=.05)
 
     # KFH All values are 2, so they are saturated
-    print(obj['ALLMASK_G'], obj['ALLMASK_R'], obj['ALLMASK_Z'])
+    print("The object is saturated, with mask G, R, Z band values of: ", obj['ALLMASK_G'], obj['ALLMASK_R'], obj['ALLMASK_Z'])
 
     # KFH This object on the sky viewer is definitely not a galaxy
     # KFH According to simbad it's a possible blazar. This would explain why
@@ -92,3 +101,7 @@ if __name__=="__main__":
 
     psfobjs = sweep_obj(180,30, 10800, objtype = 'PSF')
     print(len(psfobjs))
+
+    qsos = coord_match(psfobjs, '/d/scratch/ASTR5160/week10/qsos-ra180-dec30-rad3.fits')
+    print(len(qsos))
+    
