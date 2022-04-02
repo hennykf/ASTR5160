@@ -4,8 +4,11 @@ from astropy.coordinates import Angle, search_around_sky, SkyCoord
 from astropy.table import Table
 from astropy import units as u
 from astropy.visualization.wcsaxes import SphericalCircle
+import matplotlib.pyplot as plt
+from sklearn import neighbors
+import math
 
-def sweep_obj(ra, dec, rad=.05, objtype=None):
+def sweep_obj(ra, dec, rad=.05, objtype=False):
     """
     Find sweep file that contains the object at the ra, dec, and calculate
     magnitude in given filters.
@@ -16,14 +19,15 @@ def sweep_obj(ra, dec, rad=.05, objtype=None):
     - RA of object in xxhxxmxxs format
     dec: str
     - Declination of object in xxdxxmxxs
-    list_of_cols: list
-    - A list of the column names in the sweep file.
-      Info on columns can be found at https://www.legacysurvey.org/dr7/files/
+    rad: float
+    - the radius of the circle to search in arcseconds
+    objtype: bool
+    - if true, subsets to only 'PSF' and r<20 magnitude objects
 
     Returns
     -------
-    mag: list
-    - A list of the magnitudes of the object at the filters given.
+    obj: ndarray
+    - an array of all objects found to be within the rad of the ra, dec.
     """
 
     # KFH Handle both hms format and degree format
@@ -76,15 +80,59 @@ def sweep_obj(ra, dec, rad=.05, objtype=None):
     return(obj)
 
 def coord_match(datatable, fits_file):
-
+    # KFH Finds matches of fits file in datatable, returns the datatable rows that match
     tab = SkyCoord(datatable["RA"], datatable["DEC"], frame='icrs', unit='degree')
-
     fits = Table.read(fits_file, format='fits')
     fits2 = SkyCoord(fits['RA'], fits['DEC'], frame='icrs', unit='degree')
-
     idx1, idx2, sep2d, dist3d = tab.search_around_sky(fits2, seplimit=.5*u.arcsec)
 
-    return(tab[idx2])
+    return(datatable[idx2])
+
+def quasar_class(stars, qsos, unknown):
+    """
+    Uses the k-NN algorithm to classify quasars based on g-z and r-W1 colors
+
+    Inputs
+    ------
+    stars: ndarray
+    - A random subset of a larger dataset, will be treated as training data
+    qsos: ndarray
+    - Array of confirmed quasars
+    unknown: ndarray
+    - A random subset of same larger dataset, to be classified
+
+    Returns
+    -------
+    
+    """
+    # KFH First calculate g-z and r-W1
+    star_color = [flux_to_mag(stars['FLUX_G']) - flux_to_mag(stars['FLUX_Z']),
+                   flux_to_mag(stars['FLUX_R']) - flux_to_mag(stars['FLUX_W1'])]
+    qsos_color = [flux_to_mag(qsos['FLUX_G']) - flux_to_mag(qsos['FLUX_Z']),
+                   flux_to_mag(qsos['FLUX_R']) - flux_to_mag(qsos['FLUX_W1'])]
+    unknown_color = [flux_to_mag(unknown['FLUX_G']) - flux_to_mag(unknown['FLUX_Z']),
+                      flux_to_mag(unknown['FLUX_R']) - flux_to_mag(unknown['FLUX_W1'])]
+
+    # KFH reshape and remove nans
+    star_clean = [list(a) for a in zip(star_color[0], star_color[1]) if np.isfinite(a).any()==True]
+    qsos_clean = [list(a) for a in zip(qsos_color[0], qsos_color[1]) if np.isfinite(a).any()==True]
+    unknown_clean = [list(a) for a in zip(unknown_color[0], unknown_color[1]) if np.isfinite(a).any()==True]
+    
+    data = np.concatenate([star_color, qsos_color])
+    data_class = np.concatenate([np.zeros(len(stars), dtype='i'),
+                                 np.ones(len(qsos), dtype='i')])
+    target_names = np.array(["star", "qso"])
+    
+    knn = neighbors.KNeighborsClassifier(n_neighbors=1)
+    knn.fit(data, data_class)
+
+    predicted_class = knn.predict(unknown)
+
+    
+def flux_to_mag(flux):
+    # KFH Convert a flux to magnitude
+    mag = 22.5-2.5*np.log10(flux)
+    return(mag)
 
 if __name__=="__main__":
 
@@ -104,4 +152,11 @@ if __name__=="__main__":
 
     qsos = coord_match(psfobjs, '/d/scratch/ASTR5160/week10/qsos-ra180-dec30-rad3.fits')
     print(len(qsos))
+
+    # KFH To avoid copying code, subsequent code is part of day 2 tasks.
+    print("All subsequent info is now part of day 2 tasks")
+    training_data = psfobjs[np.random.randint(psfobjs.shape[0], size=275)]
+    test_data = psfobjs[np.random.randint(psfobjs.shape[0], size=275)]
+    quasar_class(training_data, qsos, test_data)
+    
     
