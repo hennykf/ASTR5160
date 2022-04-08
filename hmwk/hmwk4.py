@@ -3,7 +3,7 @@ from astropy.table import Table
 from astropy.coordinates import SkyCoord
 import astropy.units as u
 import time
-from tasks.week8.sdssDR9query.py import sdssDR9query
+import sdssDR9query
 
 
 def within_radius(ra_center, dec_center, rad, fits_file):
@@ -82,25 +82,25 @@ def crossmatch(sources, sweep_folder, rad):
 
 	return(filtered)
 	
-def retrieve_sdss(datatable):
+def retrieve_sdss(ra, dec):
 	"""
-	Retrieve data from sdss for datatable objects
+	Retrieve data from sdss for datatable objects. Function based off Adam Myers' code
 	"""
 
-	url='http://skyserver.sdss3.org/dr9/en/tools/search/x_sql.asp'
+	qry = sdssDR9query.sdssQuery()
 
-	sdssQuery(datatable['RA'][0], datatable['DEC'][1])
+	query = """SELECT top 1 u,i FROM PhotoObj as PT JOIN dbo.fGetNearbyObjEq(""" + str(ra) + """,""" + str(dec) + """,0.02) as GNOE on PT.objID = GNOE.objID ORDER BY GNOE.distance"""
 
-	# KFH Create query for sdss
-	all_queries = []
-	for i in datatable:
-		query = """SELECT top 1 ra,dec,u,g,r,i,z,GNOE.distance*60 FROM PhotoObj as PT
-    	JOIN dbo.fGetNearbyObjEq(""" + str(i['RA']) + """,""" + str(i['DEC']) + """,0.02) as GNOE
-    	on PT.objID = GNOE.objID ORDER BY GNOE.distance"""
-		all_queries.append(query)
-
+	qry.query = query
 	
-	print(all_queries)
+	for line in qry.executeQuery():
+		result = line.strip()
+
+
+	time.sleep(1)
+
+	res = result.decode().split(',')
+	return(result.decode())
 
 if __name__=="__main__":
 
@@ -115,7 +115,11 @@ if __name__=="__main__":
 	print("Number of filtered objects:", len(filtered_objs))
 	
 	# KFH Retrieve sdss data
-	retrieve_sdss(filtered_objs)
+	sdss_objs = []
+	for i in filtered_objs:
+		data = retrieve_sdss(i['RA'], i['DEC'])
+		sdss_objs.append(data)
+	print(sdss_objs)
 	
 	t2=time.time()
 	print('Time', t2-t1)
