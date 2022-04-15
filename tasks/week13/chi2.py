@@ -2,7 +2,6 @@ from astropy.table import Table
 import  numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import chi2
-import pandas as pd
 
 
 def y_predict(mb, xvals):
