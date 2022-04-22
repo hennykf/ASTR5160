@@ -27,7 +27,62 @@ def post_prob(m, b, means, var, m_range, b_range):
 	
 	return(np.exp(ln_postprob), ln_postprob)
 
-def proposal_funct(m, b, means, var, m_range, b_range):
+def proposal_funct(m, b):
+	
+	new_m = m + np.random.normal(0, 0.22)
+	new_b = b + np.random.normal(0,0.22)
+	
+	return(new_m, new_b)
+
+def iterate(steps, m, b, means, var, m_range, b_range):
+	
+	mb_array = [[m, b]]
+	
+	for i in np.arange(steps):
+		
+		# KFH Find initial posterior probability using the last entry in mb_array
+		init_prob, ln_init = post_prob(mb_array[-1][0], mb_array[-1][1], means, var, m_range, b_range)
+		
+		# KFH generate new m and b
+		new_m, new_b = proposal_funct(m, b)
+	
+		# KFH Find new posterior probability
+		new_prob, ln_new = post_prob(new_m, new_b, means, var, m_range, b_range)
+	
+		# KFH Determine whether to keep the calculated new_m, new_b, or original vals
+		r = new_prob / init_prob
+		if r > 1:
+			m, b = new_m, new_b
+			mb_array.append([m,b])
+	
+		else:
+			if random.random() < r:
+				m, b = new_m, new_b
+				mb_array.append([m, b])
+			
+			else:
+				mb_array.append([3, 5])
+
+		
+	# KFH return chain
+	return(mb_array, ln_init, ln_new)
+
+if __name__=='__main__':
+
+	# KFH Find the inital likelihood and log likelihood with m=3, b=5
+	postprob = post_prob(3, 5, means, var, [0,5], [0,8])
+	print("likelihood and ln(likelihood)", postprob)
+
+	# KFH Run proposal function 1000 times
+	num_trials = 1000
+	new = iterate(num_trials, 3, 5, means, var, [0,5], [0,8])
+			
+	# KFH Calculate how many of these runs resulted in accepted m, b values
+	print("Percent of runs keeping new parameters:",
+	 1-np.count_nonzero(np.asarray(new[0]).T[0] == 3)/num_trials)
+
+
+
 	"""
 	Start with m, b, and run post_prob on variations by delta m and b.
 	If the new m and b results in a more likely posterior probability
@@ -58,41 +113,6 @@ def proposal_funct(m, b, means, var, m_range, b_range):
 	ln_new: float
 	- The ln of the posterior probability with the returned values of m and b 
 	"""
-	# KFH Find initial posterior probability
-	init_prob, ln_init = post_prob(m, b, means, var, m_range, b_range)
-	
-	new_m = m + np.random.normal(0, 0.27)
-	new_b = b + np.random.normal(0,0.27)
-	
-	# KFH Find new posterior probability
-	new_prob, ln_new = post_prob(new_m, new_b, means, var, m_range, b_range)
-	
-	# KFH Determine whether to keep the calculated new_m, new_b, or original vals
-	r = new_prob / init_prob
-	if r > 1:
-		m, b = new_m, new_b
-	
-	else:
-		if random.random() < r:
-			m, b = new_m, new_b
-		
-	# KFH return chain
-	return(m, b, ln_init, ln_new)
-
-if __name__=='__main__':
-
-	# KFH Find the inital likelihood and log likelihood with m=3, b=5
-	postprob = post_prob(3, 5, means, var, [0,5], [0,8])
-	print("likelihood and ln(likelihood)", postprob)
-
-	# KFH Run proposal function 1000 times
-	num_trials = 1000
-	new = np.asarray([proposal_funct(3, 5, means, var, [0,5], [0,8]) \
-			for i in np.arange(num_trials)])
-			
-	# KFH Calculate how many of these runs resulted in accepted m, b values
-	print("Percent runs with new parameters:",
-	 1-np.count_nonzero(new.T[0] == 3)/num_trials)
 	
 
 
