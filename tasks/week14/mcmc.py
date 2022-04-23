@@ -10,7 +10,29 @@ means = [np.mean(col) for col in data]
 
 def post_prob(m, b, means, var, m_range, b_range):
 	"""
-	m_range and b_range should be of the format [m_min, m_max] and [b_min, b_max]
+	Computes the posterior probability given parameters and priors
+
+	Inputs
+	------
+	m: float
+	- A value corresponding to the slope of mx+b
+	b: float
+	- A value corresponding to the y-intercept of mx+b
+	means: list
+	- Mean y values of bins of data
+	var: list
+	- Variance in y values of bins of data
+	m_range: list
+	- A list of floats of the form [m_min, m_max], that limit the m priors
+	b_range: list
+	- A list of floats of the form [b_min, b_max], that limit the b priors
+
+	Returns
+	-------
+	postprob: float
+	- The posterior probability
+	ln_postprob: float
+	- The natural log of the posterior probability
 	"""
 	
 	# KFH Calculate y vals from average x  vals
@@ -28,6 +50,10 @@ def post_prob(m, b, means, var, m_range, b_range):
 	return(np.exp(ln_postprob), ln_postprob)
 
 def proposal_funct(m, b):
+	"""
+	Inputs a m and b value and returns m and b values that have some value
+	added based on a gaussian distribution centered at 0 with a stdev=0.22
+	"""
 	
 	new_m = m + np.random.normal(0, 0.22)
 	new_b = b + np.random.normal(0,0.22)
@@ -35,13 +61,36 @@ def proposal_funct(m, b):
 	return(new_m, new_b)
 
 def iterate(steps, m, b, means, var, m_range, b_range):
+	"""
+	Performs a metropolis-hastings mcmc walk starting at m, b for a number of steps
+
+	Inputs
+	------
+	steps: int
+	- The number of total steps for the mcmc to perform
+	m: float
+	- A value corresponding to the slope of mx+b
+	b: float
+	- A value corresponding to the y-intercept of mx+b
+	means: list
+	- Mean y values of bins of data
+	var: list
+	- Variance in y values of bins of data
+	m_range: list
+	- A list of floats of the form [m_min, m_max], that limit the m priors
+	b_range: list
+	- A list of floats of the form [b_min, b_max], that limit the b priors
+
 	
+	"""
+	m_init, b_init = m, b
 	mb_array = [[m, b]]
 	
 	for i in np.arange(steps):
 		
 		# KFH Find initial posterior probability using the last entry in mb_array
-		init_prob, ln_init = post_prob(mb_array[-1][0], mb_array[-1][1], means, var, m_range, b_range)
+		init_prob, ln_init = post_prob(mb_array[-1][0], mb_array[-1][1], means,
+						 var, m_range, b_range)
 		
 		# KFH generate new m and b
 		new_m, new_b = proposal_funct(m, b)
@@ -61,7 +110,7 @@ def iterate(steps, m, b, means, var, m_range, b_range):
 				mb_array.append([m, b])
 			
 			else:
-				mb_array.append([3, 5])
+				mb_array.append([m_init, b_init])
 
 		
 	# KFH return chain
@@ -87,20 +136,7 @@ if __name__=='__main__':
 	Start with m, b, and run post_prob on variations by delta m and b.
 	If the new m and b results in a more likely posterior probability
 	
-	Inputs
-	------
-	m: float
-	- A value corresponding to the slope of mx+b
-	b: float
-	- A value corresponding to the y-intercept of mx+b
-	means: list
-	- Mean y values of bins of data
-	var: list
-	- Variance in y values of bins of data
-	m_range: list
-	- A list of floats of the form [m_min, m_max], that limit the m priors
-	b_range: list
-	- A list of floats of the form [b_min, b_max], that limit the b priors
+	
 	
 	Returns
 	-------
