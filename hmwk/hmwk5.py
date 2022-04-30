@@ -27,7 +27,8 @@ def get_qsos(sources, sweep_folder, rad, saveloc):
 	
 	Outputs
 	-------
-	
+	fits file in location specified by saveloc, containing the sweeps data for
+	input sources
 	"""
 	sweep_filenames =  set(['sweep-{}{}{}-{}{}{}.fits'.format(f"{int(q['RA'] - (q['RA']%10)):03d}",
 		'm' if (q['DEC'] - (q['DEC']%5)) < 0 else 'p',
@@ -78,6 +79,15 @@ def quasar_class(stars, qsos, unknown):
 	- A random subset of same larger dataset, to be classified
 	Returns
 	-------
+	bools: bool
+	- Boolean array of number of objects in 'unknown', True means object was
+	identified as a quasar, False means object was ruled out or not identified as a quasar
+	star_clean: list
+	- List of objects used as stars in knn model
+	qsos_clean: list
+	- List of confirmed quasars used in knn model
+	unknown_clean_eligible: list
+	- List of possible quasars categorized by knn
 	"""
 	# KFH temporarily turn off runtime warnings
 	np.seterr(divide='ignore', invalid='ignore')
@@ -96,7 +106,11 @@ def quasar_class(stars, qsos, unknown):
 	# KFH reshape and remove nans
 	star_clean = [list(a) for a in zip(star_color[0], star_color[1]) if np.isfinite(a).all()==True]
 	qsos_clean = [list(a) for a in zip(qsos_color[0], qsos_color[1]) if np.isfinite(a).all()==True]
-	unknown_clean = [list(a) for a in zip(unknown_color[0], unknown_color[1]) if np.isfinite(a).all()==True]
+	
+	# KFH Reshape and pull indices without nans
+	unknown_clean = [list(a) for a in zip(unknown_color[0], unknown_color[1])]
+	unknown_clean_idx = [idx for idx, element in enumerate(unknown_clean) if np.isfinite(element).all() == True]
+	unknown_clean_eligible = [unknown_clean[i] for i in unknown_clean_idx]
 
 	# KFH Combine known stars and quasars
 	data = np.concatenate([star_clean, qsos_clean])
@@ -106,14 +120,23 @@ def quasar_class(stars, qsos, unknown):
     # KFH Use knn to create classifier
 	knn = neighbors.KNeighborsClassifier(n_neighbors=1)
 	knn.fit(data, data_class)
+	
+	# KFH Create boolean array of False of length unknown_clean
+	bools = np.zeros(len(unknown_clean), dtype='bool')
 
 	# KFH Apply classifier to unknown objects
-	predicted_class = knn.predict(unknown_clean)
-	return(predicted_class, star_clean, qsos_clean, unknown_clean)
+	predicted_class = knn.predict(unknown_clean_eligible)
+	
+	# KFH Apply predicted class to bools that could be quasars (doesn't work with a list comprehension btw)
+	for (i, b) in zip(unknown_clean_idx, predicted_class):
+		bools[i] = b
+
+	return(bools, star_clean, qsos_clean, unknown_clean_eligible)
 	
 def cut_criteria(table, stars=True):
 	"""
-	Subsets an astropy Table applying various criteria
+	Subsets an astropy Table applying various criteria, to get a subset that are more 
+	likely to be stars or quasars than an unsorted sample
 	
 	Inputs
 	------
@@ -153,7 +176,9 @@ def cut_criteria(table, stars=True):
 def splendid_function(table):
 	"""
 	Takes an astropy Table and classifies the objects, based on a known table
-	of quasars and a table of mostly non-quasars.
+	of quasars and a table of mostly non-quasars. Starlike table and unknown
+	table are filtered to remove unlikely candidates for stars and quasars respectively
+	to improve categorization.
 	"""
 	# KFH Read in known quasar data
 	quasars = Table.read('quasars_sweep_data.fits', format='fits')
@@ -193,11 +218,14 @@ if __name__=="__main__":
 	start  = time.time()
 	
 	ap = ArgumentParser(description='Find how many quasars are in the given Table')
-	ap.add_argument('table', help='Astropy Table in sweeps format')
+	ap.add_argument('datatable', help='Fits file name, formated like the sweeps files')
 	ns = ap.parse_args()
+	
+	# KFH Read in file as astropy Table
+	tab = Table.read(ns.datatable, format='fits')
 
-	binary = splendid_function(ns.table)
-	print(binary)
+	# KFH Run fit on Table and print number of identified quasars
+	binary = splendid_function(tab)
 	print("Number of quasars", list(binary).count(True))
 
 	end = time.time()
